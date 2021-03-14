@@ -1,6 +1,6 @@
 # MiniBottle
 
-为了深入学习web框架，参考[Bottle框架](https://github.com/bottlepy/bottle)，从0到1实现简单的wsgi应用框架MiniBottle。
+参考[Bottle框架](https://github.com/bottlepy/bottle)，从0到1实现简单的wsgi应用框架MiniBottle。
 
 阅读本教程前，需要了解基础的python语法和HTTP协议。
 
@@ -326,7 +326,7 @@ if __name__ == "__main__":
 
 ## 第四步：实现静态路由处理
 
-**目前为止：**我们的应用端对所有的请求，返回的都是hello world字符串。
+**目前为止**：我们的应用端对所有的请求，返回的都是hello world字符串。
 
 **本节将实现**：根据用户不同请求路径，调用不同函数处理请求。本节实现访问`/hello`或`/world`时，返回不同的内容
 
@@ -426,12 +426,12 @@ def hello():
 	pass
 ```
 
-**本节涉及到的知识点：**装饰器（将函数作为一个对象传入函数），参考资料如下
+**本节涉及到的知识点**：装饰器（将函数作为一个对象传入函数），参考资料如下
 
 - [装饰器——廖雪峰的python教程](https://www.liaoxuefeng.com/wiki/1016959663602400/1017451662295584)
 - [理解 Python 装饰器看这一篇就够了——python之禅](https://foofish.net/python-decorator.html)
 
-**具体实现如下：**
+**具体实现如下**：
 
 本节代码新增了如下部分
 
