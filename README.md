@@ -6,11 +6,26 @@
 
 每节的代码都可以直接运行的，下一节代码是在上节基础上进行修改，建议参考代码注释动手输入，不要直接复制粘贴
 
+目录
+- [MiniBottle](#minibottle)
+  - [WSGI简介](#wsgi简介)
+    - [简介](#简介)
+    - [什么是接口？](#什么是接口)
+    - [什么是WSGI接口？](#什么是wsgi接口)
+    - [应用端](#应用端)
+    - [服务端](#服务端)
+    - [python内置的服务端wsgiref](#python内置的服务端wsgiref)
+    - [wsgi服务端的简单实现](#wsgi服务端的简单实现)
+  - [第一步：用wsgiref服务器启动一个wsgi应用](#第一步用wsgiref服务器启动一个wsgi应用)
+  - [第二步：把启动服务器函数封装为类对象](#第二步把启动服务器函数封装为类对象)
+  - [第三步：用类对象实现应用端](#第三步用类对象实现应用端)
+  - [第四步：实现静态路由处理](#第四步实现静态路由处理)
+  - [第五步：用户自定义静态路由](#第五步用户自定义静态路由)
 ##  WSGI简介
 
 ### 简介
 
-**什么是接口？**
+### 什么是接口？
 
 生活中的插座就是一种接口，供电端和用电端通过插座连接。使用时把电器的插头插入插座就可以，而不是直接把它连接到导线上。
 
@@ -19,7 +34,7 @@
 - 供电端：负责将电提供到插座上，无需关心是哪个电器在用电
 - 用电端：使用时把电器的插头插入插座就可以，就无需关心供电端是如何供电的
 
-**什么是WSGI接口？**
+### 什么是WSGI接口？
 
 Python Web服务器网关接口（Python Web Server Gateway Interface）是为Web服务器和Web应用程序或框架之间的定义的一种简单而通用的接口，具体可参考[PEP3333_Python Web Server Gateway Interface v1.0.1](https://www.python.org/dev/peps/pep-3333/)
 
@@ -29,45 +44,49 @@ WSGI接口将HTTP网络请求分为两边，服务器端调用应用程序端。
 wsgi server <-----wsgi接口------> wsgi application
 ```
 
-- 一边是服务器server（又名网关gateway端）：服务端负责处理http请求和返回。
+- 一边是服务端server（又名网关gateway端）：服务端负责处理http请求和返回。
 
-- 另一边是应用端application（又名框架framework端）：应用端只需要调用服务端的wsgi的接口，负责生成返回内容就可以了。
+- 一边是应用端application（又名框架framework端）：应用端只需要调用服务端的wsgi的接口，负责生成返回内容就可以了。
 
-### **应用端**
+### 应用端
 
 应用端（application objects）是一个接受两个参数（environ, start_response）的可调用对象（callable object）。
 
-下面用函数实现hello world应用端：
+一个接受两个参数的函数就是一个应用端：
+
+- environ：http请求的所有参数
+- start_response：一个用来返回http响应的函数
+
+下面用函数实现最简单的hello world应用端：
 
 ```python
 def demo_app(environ, start_response):
     # environ是包含http请求的所有参数的字典dict
     # start_response是一个用来返回http响应头部的函数
     start_response("200 OK", [('Content-Type', 'text/plain; charset=utf-8')]) 
-    return [b'<h1>Hello, world!</h1>'] # 返回一个可迭代iterable对象，这个对象会作为http响应的消息体body
+    return [b'<h1>Hello, world!</h1>'] # 返回一个可迭代（iterable）对象，这个对象会作为http响应的消息体body
 ```
 
-函数接受了两个参数：
+> 注：应用端对象（application objects）不只有函数这一种， 还可以是：实现`__iter__`方法的类，或有`__call__`方法的实例。每次http请求，服务端都会调用应用端对象。
+
+### 服务端
+
+服务端针对每次http请求，在服务端内部都会调用一次应用端（application object）
+
+我们在上文定义了一个应用端函数demo_app，服务端调用它的形式如下，服务端会传给demo_app函数两个参数：
 
 - environ：http请求的所有参数
 - start_response：一个用来返回http响应的函数
-
-> 注：应用端对象（application objects）不只有函数function,这一种， 还可以是：实现`__iter__`方法的类，或有`__call__`方法的实例。每次http请求，服务端都会调用应用端对象。
-
-### **服务端**
-
-服务端针对每次http请求，都会调用一次应用端（application object）
 
 ```python
 demo_app(environ, start_response):
 ```
 
-传给demo_app函数两个参数：
+可以看到demo_app在内部调用了start_response，告诉服务端，开始进行http响应。
 
-- environ：http请求的所有参数
-- start_response：一个用来返回http响应的函数
+最后demo_app返回一个可迭代对象，这个对象会在服务端内进行迭代，写入到http报文的主体中
 
-**python内置的服务端wsgiref**
+### python内置的服务端wsgiref
 
 python内置了一个的wsgi服务端wsigref，我们把我们的demo_app在wsgi服务器上启动，浏览器访问http://localhost:8080可以看到hello world。
 
@@ -83,9 +102,7 @@ if __name__ == '__main__':
         httpd.serve_forever() # 一直处理请求
 ```
 
-**[wsgiref.simple_server官方文档](https://docs.python.org/3/library/wsgiref.html#module-wsgiref.simple_server)**
-
-**可以暂时跳过**，后面需要用到wsgiref再回头来看
+[wsgiref.simple_server文档](https://docs.python.org/3/library/wsgiref.html#module-wsgiref.simple_server)中有如何启动wsgiref，**可以暂时跳过**，等后文需要用到wsgiref再回头来看
 
 `wsgiref.simple_server.make_server(host, port, app, server_class=WSGIServer, handler_class=WSGIRequestHandler)`  - > instance of server_class
 
@@ -93,7 +110,7 @@ Create a new WSGI server listening on *host* and *port*, accepting connections f
 
 `start_response(status:str, headers:[('key1', 'value1'),('key2','value2')])`
 
-**实现一个简单的wsgi服务端的示例**
+### wsgi服务端的简单实现
 
 我们很少会自己实现wsgi服务器，这里给出示例。是为了学习服务端是如何调用application这个对象的。
 
@@ -419,8 +436,9 @@ def hello():
 本节代码新增了如下部分
 
 - 新增Route类：
-  - 把route函数抽象为Route类，封装了对应的应用端对象，请求路径、请求方法、回调函数
-
+  
+- 把route函数抽象为Route类，封装了对应的应用端对象，请求路径、请求方法、回调函数
+  
 - MiniBottle中 
   - 定义router方法：表示一个路由器，它的作用是根据请求路径，查找对应的路由route对象	
 
